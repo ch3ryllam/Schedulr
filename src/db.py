@@ -85,7 +85,7 @@ class Course(db.Model):
     """
 
     __tablename__ = "course"
-    number = db.Column(db.String, primary_key=True)  # Example: "CS 3110"
+    number = db.Column(db.String, primary_key=True)
     name = db.Column(db.String, nullable=False)
     description = db.Column(db.String)
     credits = db.Column(db.Integer)
@@ -110,8 +110,8 @@ class CourseSection(db.Model):
     __tablename__ = "course_section"
     id = db.Column(db.Integer, primary_key=True)
     course_number = db.Column(db.String, db.ForeignKey("course.number"), nullable=False)
-    section = db.Column(db.String, nullable=False)  # Example: "LEC 001"
-    days = db.Column(db.String, nullable=False)  # Example: "MWF"
+    section = db.Column(db.String, nullable=False)
+    days = db.Column(db.String, nullable=False)
     start_min = db.Column(db.Integer, nullable=False)
     end_min = db.Column(db.Integer, nullable=False)
 
