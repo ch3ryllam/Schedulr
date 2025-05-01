@@ -9,13 +9,16 @@ class CompletedCourse(db.Model):
     """
 
     __tablename__ = "completed_course"
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    course_number = db.Column(db.String, db.ForeignKey("course.number"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), primary_key=True, nullable=False)
+    course_number = db.Column(db.String, db.ForeignKey("course.number"), primary_key=True, nullable=False)
+
+    course = db.relationship("Course", lazy=True)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def serialize(self):
         return {
-            "id": self.id,
             "user_id": self.user_id,
             "course_number": self.course_number,
         }
@@ -28,8 +31,11 @@ class CoursePrereq(db.Model):
 
     __tablename__ = "course_prereq"
     id = db.Column(db.Integer, primary_key=True)
-    course_number = db.Column(db.String, db.ForeignKey("course.number"), nullable=False)
-    prereq_number = db.Column(db.String, db.ForeignKey("course.number"), nullable=False)
+    course_number = db.Column(db.String, db.ForeignKey("course.number"), primary_key=True, nullable=False)
+    prereq_number = db.Column(db.String, db.ForeignKey("course.number"), primary_key=True, nullable=False)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def serialize(self):
         return {
@@ -45,11 +51,14 @@ class CoreClass(db.Model):
     """
 
     __tablename__ = "core_class"
-    id = db.Column(db.Integer, primary_key=True)
-    course_number = db.Column(db.String, db.ForeignKey("course.number"), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    course_numbers = db.Column(db.ARRAY(db.Integer), db.ForeignKey("course.number"), nullable=False)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def serialize(self):
-        return {"id": self.id, "course_number": self.course_number}
+        return {"id": self.id, "course_number": self.course_numbers}
 
 
 class User(db.Model):
@@ -58,17 +67,25 @@ class User(db.Model):
     """
 
     __tablename__ = "user"
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    netid = db.Column(db.String, unique=True, nullable=False)
     graduation_term = db.Column(db.String, nullable=False)
-    interests = db.Column(db.String)
-    availability = db.Column(db.String)
+    interests = db.Column(db.ARRAY(db.String))
 
-    generated_schedules = db.relationship("GeneratedSchedule", backref="user")
-    completed_courses = db.relationship("CompletedCourse", backref="user")
+    #168 char string with 0s and 1s representing availability. 
+    #If the 1st char is 1 that means someone is free on monday 12 am - 1 am, etc.
+    availability = db.Column(db.String, nullable=False)
+
+    generated_schedules = db.relationship("GeneratedSchedule", backref="user", lazy=True)
+    completed_courses = db.relationship("CompletedCourse", backref="user", lazy=True)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def serialize(self):
         return {
             "id": self.id,
+            "netid": self.netid,
             "graduation_term": self.graduation_term,
             "interests": self.interests,
             "availability": self.availability,
@@ -90,7 +107,12 @@ class Course(db.Model):
     description = db.Column(db.String)
     credits = db.Column(db.Integer)
 
-    sections = db.relationship("CourseSection", backref="course")
+    sections = db.relationship("CourseSection", backref="course", lazy=True)
+    prereqs = db.relationship("CoursePrereq", foreign_keys="CoursePrereq.course_number", backref="course", lazy=True)
+    required_by = db.relationship("CoursePrereq", foreign_keys="CoursePrereq.prereq_number", backref="prereq", lazy=True)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def serialize(self):
         return {
@@ -108,7 +130,7 @@ class CourseSection(db.Model):
     """
 
     __tablename__ = "course_section"
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrements=True)
     course_number = db.Column(db.String, db.ForeignKey("course.number"), nullable=False)
     section = db.Column(db.String, nullable=False)
     days = db.Column(db.String, nullable=False)
@@ -116,6 +138,9 @@ class CourseSection(db.Model):
     end_min = db.Column(db.Integer, nullable=False)
 
     schedule_sections = db.relationship("ScheduleSection", backref="section")
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def serialize(self):
         return {
@@ -143,12 +168,15 @@ class GeneratedSchedule(db.Model):
     """
 
     __tablename__ = "generated_schedule"
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     score = db.Column(db.Float)
     rationale = db.Column(db.String)
 
-    sections = db.relationship("ScheduleSection", backref="schedule")
+    sections = db.relationship("ScheduleSection", backref="schedule", lazy=True)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def serialize(self):
         return {
@@ -174,13 +202,15 @@ class ScheduleSection(db.Model):
     """
 
     __tablename__ = "schedule_section"
-    id = db.Column(db.Integer, primary_key=True)
     schedule_id = db.Column(
-        db.Integer, db.ForeignKey("generated_schedule.id"), nullable=False
+        db.Integer, db.ForeignKey("generated_schedule.id"), nullable=False, primary_key=True
     )
     section_id = db.Column(
-        db.Integer, db.ForeignKey("course_section.id"), nullable=False
+        db.Integer, db.ForeignKey("course_section.id"), nullable=False, primary_key=True
     )
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def serialize(self):
         return {
