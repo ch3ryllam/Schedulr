@@ -52,13 +52,13 @@ class CoreClass(db.Model):
 
     __tablename__ = "core_class"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    course_numbers = db.Column(db.ARRAY(db.Integer), db.ForeignKey("course.number"), nullable=False)
+    course_number = db.Column(db.Integer, db.ForeignKey("course.number"), nullable=False)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     def serialize(self):
-        return {"id": self.id, "course_number": self.course_numbers}
+        return {"id": self.id, "course_number": self.course_number}
 
 
 class User(db.Model):
@@ -70,7 +70,9 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     netid = db.Column(db.String, unique=True, nullable=False)
     graduation_term = db.Column(db.String, nullable=False)
-    interests = db.Column(db.ARRAY(db.String))
+
+    #split by ","
+    interests = db.Column(db.String)
 
     #168 char string with 0s and 1s representing availability. 
     #If the 1st char is 1 that means someone is free on monday 12 am - 1 am, etc.
@@ -130,7 +132,7 @@ class CourseSection(db.Model):
     """
 
     __tablename__ = "course_section"
-    id = db.Column(db.Integer, primary_key=True, autoincrements=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     course_number = db.Column(db.String, db.ForeignKey("course.number"), nullable=False)
     section = db.Column(db.String, nullable=False)
     days = db.Column(db.String, nullable=False)
