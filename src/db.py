@@ -22,6 +22,11 @@ class CompletedCourse(db.Model):
             "user_id": self.user_id,
             "course_number": self.course_number,
         }
+    
+    def serialize_without_user_id(self):
+        return {
+            "course_number": self.course_number,
+        }
 
 
 class CoursePrereq(db.Model):
@@ -51,14 +56,13 @@ class CoreClass(db.Model):
     """
 
     __tablename__ = "core_class"
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    course_number = db.Column(db.Integer, db.ForeignKey("course.number"), nullable=False)
+    course_number = db.Column(db.String, db.ForeignKey("course.number"), nullable=False, primary_key=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     def serialize(self):
-        return {"id": self.id, "course_number": self.course_number}
+        return {"course_number": self.course_number}
 
 
 class User(db.Model):
@@ -68,15 +72,15 @@ class User(db.Model):
 
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    netid = db.Column(db.String, unique=True, nullable=False)
-    graduation_term = db.Column(db.String, nullable=False)
+    netid = db.Column(db.String, nullable=False)
 
-    #split by ","
-    interests = db.Column(db.String)
+    #ex. SP27, FA26
+    graduation_year = db.Column(db.String, nullable=False)
+    interests = db.Column(db.String, nullable=True)
 
     #168 char string with 0s and 1s representing availability. 
     #If the 1st char is 1 that means someone is free on monday 12 am - 1 am, etc.
-    availability = db.Column(db.String, nullable=False)
+    availability = db.Column(db.String, nullable=True)
 
     generated_schedules = db.relationship("GeneratedSchedule", backref="user", lazy=True)
     completed_courses = db.relationship("CompletedCourse", backref="user", lazy=True)
@@ -88,10 +92,10 @@ class User(db.Model):
         return {
             "id": self.id,
             "netid": self.netid,
-            "graduation_term": self.graduation_term,
+            "graduation_year": self.graduation_year,
             "interests": self.interests,
             "availability": self.availability,
-            "completed_courses": [c.serialize() for c in self.completed_courses],
+            "completed_courses": [c.serialize_without_user_id() for c in self.completed_courses],
             "generated_schedules": [
                 s.serialize_no_sections() for s in self.generated_schedules
             ],
@@ -220,3 +224,25 @@ class ScheduleSection(db.Model):
             "schedule_id": self.schedule_id,
             "section_id": self.section_id,
         }
+    
+def seed_courses(app):
+    pass
+
+def seed_prereq(app):
+    pass
+
+def seed_schedules(app):
+    pass
+
+def seed_core(app):
+    with app.app_context():
+        core_courses = [CoreClass(course_number= "CS 1110"), CoreClass(course_number= "CS 1112"), CoreClass(course_number= "CS 2110"), 
+                        CoreClass(course_number= "CS 2800"), CoreClass(course_number= "CS 3110"), CoreClass(course_number= "CS 3410"), 
+                        CoreClass(course_number= "CS 3420"), CoreClass(course_number= "CS 4410"), CoreClass(course_number= "CS 4414"), 
+                        CoreClass(course_number= "CS 4820")]
+        for course in core_courses:
+            if not CoreClass.query.filter_by(course_number= course.course_number).first():
+                db.session.add(course) 
+        
+        db.session.commit()
+        print("Seeded core courses")
