@@ -4,6 +4,6 @@ services:
   courseapp:
     image: robylongo1/courseapp
     ports:
-      - "5000:5000"
+      - "80:5000"
     env_file:
       - .env
