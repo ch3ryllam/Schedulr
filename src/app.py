@@ -1,5 +1,5 @@
 import json
-from db import db, seed_courses, seed_core, seed_prereq, seed_schedules
+from scripts.scraper import seed_core, seed_courses, seed_prereq, seed_schedules
 from flask import Flask, request
 from db import (
     db,
@@ -24,7 +24,11 @@ def create_app():
 
     db.init_app(app)
 
-    with app.app_context():
+    @app.cli.command("seed-all")
+    def seed_all():
+        """
+        Seeds all the tables. Remember to call 'flask seed-all'
+        """
         db.create_all()
         seed_courses(app)
         seed_core(app)
@@ -219,8 +223,11 @@ def get_availability(user_id):
 
 @app.route("/courses/")
 def list_courses():
-    """Return all CS courses in the catalog."""
-    pass
+    """
+    Return all CS courses in the catalog.
+    """
+    courses = [course.serialize() for course in Course.query.all()]
+    return success_response({"courses": courses})
 
 @app.route("/courses/<int:number>/")
 def get_course(number):
@@ -229,12 +236,17 @@ def get_course(number):
 
 @app.route("/sections/")
 def list_sections():
-    """Return all CS course sections (Fall 2025)."""
-    pass
+    """
+    Return all CS course sections (Fall 2025).
+    """
+    sections = [section.serialize() for section in CourseSection.query.all()]
+    return success_response({"sections": sections})
 
 @app.route("/core-sets/")
 def get_core_courses():
-    """Return the 7 core CS courses."""
+    """
+    Return the 7 core CS courses.
+    """
     core_courses = [course.serialize() for course in CoreClass.query.all()]
     return success_response({"courses": core_courses})
 
