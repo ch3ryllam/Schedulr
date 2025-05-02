@@ -13,8 +13,9 @@ from db import (
     ScheduleSection,
 )
 
+
 def create_app():
-    
+
     app = Flask(__name__)
     db_filename = "course.db"
 
@@ -37,6 +38,7 @@ def create_app():
 
     return app
 
+
 app = create_app()
 
 
@@ -46,6 +48,8 @@ def success_response(data, code=200):
 
 def failure_response(message, code=404):
     return json.dumps({"error": message}), code
+
+
 db.init_app(app)
 with app.app_context():
     db.create_all()
@@ -55,6 +59,7 @@ with app.app_context():
 def hello_world():
     return "Hello world!"
 
+
 @app.route("/users/", methods=["POST"])
 def create_user():
     """
@@ -63,15 +68,23 @@ def create_user():
     """
     body = json.loads(request.data)
     netid, grad_year = body.get("netid"), body.get("graduation_year")
+    interests = body.get("interests")
+    availability = body.get("availability")
 
-    if None in (netid, grad_year):
-        return failure_response("Missing netid or graduation_year", code=400)
+    if None in (netid, grad_year, availability):
+        return failure_response("Missing required fields", code=400)
 
-    new_user = User(netid = netid, graduation_year = grad_year)
+    new_user = User(
+        netid=netid,
+        graduation_year=grad_year,
+        interests=interests,
+        availability=availability,
+    )
     db.session.add(new_user)
     db.session.commit()
 
     return success_response(new_user.serialize(), code=201)
+
 
 @app.route("/users/")
 def all_users():
@@ -86,10 +99,11 @@ def all_users():
 @app.route("/users/<int:user_id>/")
 def get_user(user_id):
     """Get user profile by ID."""
-    user = User.query.filter_by(id = user_id).first()
+    user = User.query.filter_by(id=user_id).first()
     if user is None:
         return failure_response("User not found.")
     return success_response(user.serialize())
+
 
 @app.route("/users/<int:user_id>/", methods=["PATCH"])
 def update_user(user_id):
@@ -101,13 +115,18 @@ def update_user(user_id):
     user = User.query.get(user_id)
     if user is None:
         return failure_response("User not found")
-    
+
     body = json.loads(request.data)
-    netid, grad_year, interests, availability =  body.get("netid"), body.get("graduation_year"), body.get("interests"), body.get("availability")
+    netid, grad_year, interests, availability = (
+        body.get("netid"),
+        body.get("graduation_year"),
+        body.get("interests"),
+        body.get("availability"),
+    )
     attribute_list = [netid, grad_year, interests, availability]
     if all(x is None for x in attribute_list):
         return failure_response("Must provide a valid field to update", code=400)
-    
+
     if netid is not None:
         user.netid = netid
     if grad_year is not None:
@@ -120,31 +139,34 @@ def update_user(user_id):
     db.session.commit()
     return success_response(user.serialize())
 
+
 @app.route("/users/<int:user_id>/", methods=["DELETE"])
 def delete_user(user_id):
     """
     Delete a user and all their data.
     """
-    user = User.query.filter_by(id = user_id).first()
+    user = User.query.filter_by(id=user_id).first()
     if user is None:
         return failure_response("User not found.")
-    
+
     db.session.delete(user)
     db.session.commit()
 
     return success_response(user.serialize())
+
 
 @app.route("/users/<int:user_id>/completions/")
 def list_completions(user_id):
     """
     Return all completed courses for this user.
     """
-    user = User.query.filter_by(id= user_id).first()
+    user = User.query.filter_by(id=user_id).first()
     if user is None:
         return failure_response("User not found.")
     completions = user.serialize()["completed_courses"]
 
     return success_response({"completed_courses": completions})
+
 
 @app.route("/users/<int:user_id>/completions/", methods=["POST"])
 def add_completion(user_id):
@@ -152,36 +174,41 @@ def add_completion(user_id):
     Mark a course as completed by the user.
     The body of the request should have a "course_number" field with the number of the course (eg. "CS 4820").
     """
-    user = User.query.filter_by(id= user_id).first()
+    user = User.query.filter_by(id=user_id).first()
     if user is None:
         return failure_response("User not found.")
-    
+
     body = json.loads(request.data)
     course_number = body.get("course_number")
     if course_number is None:
-        return failure_response("Must provide a course_number field.", code= 400)
-    
+        return failure_response("Must provide a course_number field.", code=400)
+
     if course_number[:3] != "CS ":
-        return failure_response("Course number must start with 'CS ' followed by the number.", code= 400)
-    completion = CompletedCourse(user_id= user_id, course_number= str(course_number))
+        return failure_response(
+            "Course number must start with 'CS ' followed by the number.", code=400
+        )
+    completion = CompletedCourse(user_id=user_id, course_number=str(course_number))
     db.session.add(completion)
     db.session.commit()
-    return success_response(completion.serialize(), code= 201)
+    return success_response(completion.serialize(), code=201)
+
 
 @app.route("/users/<int:user_id>/completions/<int:course_number>", methods=["DELETE"])
 def remove_completion(user_id, course_number):
     """
     Remove a completed course from this user.
     """
-    user = User.query.filter_by(id= user_id).first()
+    user = User.query.filter_by(id=user_id).first()
     if user is None:
         return failure_response("User not found.")
-    
-    course_number = "CS "+ str(course_number)
-    completion = CompletedCourse.query.filter_by(user_id= user_id, course_number= course_number). first()
+
+    course_number = "CS " + str(course_number)
+    completion = CompletedCourse.query.filter_by(
+        user_id=user_id, course_number=course_number
+    ).first()
     if completion is None:
         return failure_response("User has not completed that course.")
-    
+
     db.session.delete(completion)
     db.session.commit()
 
@@ -194,53 +221,57 @@ def set_availability(user_id):
     Set or update the user's availability bitmask.
     """
 
-    user = User.query.filter_by(id= user_id).first()
+    user = User.query.filter_by(id=user_id).first()
     if user is None:
         return failure_response("User not found.")
-    
+
     body = json.loads(request.data)
     availability = body.get("availability")
     if availability is None:
-        return failure_response("Did not provide availability.", code= 400)
-    
+        return failure_response("Did not provide availability.", code=400)
+
     user.availability = availability
     db.session.commit()
 
-    return success_response(user.serialize(), code= 201)
+    return success_response(user.serialize(), code=201)
+
 
 @app.route("/users/<int:user_id>/availability/")
 def get_availability(user_id):
     """
     Return the user's current availability bitmask.
     """
-    user = User.query.filter_by(id= user_id).first()
+    user = User.query.filter_by(id=user_id).first()
     if user is None:
         return failure_response("User not found.")
-    
+
     return success_response({"availability": user.availability})
 
-# Course routes
 
+# Course routes
 @app.route("/courses/")
 def list_courses():
-    """
-    Return all CS courses in the catalog.
-    """
-    courses = [course.serialize() for course in Course.query.all()]
-    return success_response({"courses": courses})
+    """Return all CS courses in the catalog."""
+    courses = Course.query.all()
+    return success_response({"courses": [course.serialize() for course in courses]})
+
 
 @app.route("/courses/<int:number>/")
 def get_course(number):
     """Get info about a single course."""
-    pass
+    number_str = f"CS {number}"
+    course = Course.query.get(number_str)
+    if course is None:
+        return failure_response("Course not found")
+    return success_response(course.serialize())
+
 
 @app.route("/sections/")
 def list_sections():
-    """
-    Return all CS course sections (Fall 2025).
-    """
-    sections = [section.serialize() for section in CourseSection.query.all()]
-    return success_response({"sections": sections})
+    """Return all CS course sections (Fall 2025)."""
+    sections = CourseSection.query.all()
+    return success_response({"sections": [section.serialize() for section in sections]})
+
 
 @app.route("/core-sets/")
 def get_core_courses():
@@ -250,27 +281,85 @@ def get_core_courses():
     core_courses = [course.serialize() for course in CoreClass.query.all()]
     return success_response({"courses": core_courses})
 
-# Schedule routes
 
+# Schedule routes
 @app.route("/schedules/<int:user_id>/")
 def list_schedules(user_id):
     """List all generated schedules for a user."""
-    pass
+    user = User.query.get(user_id)
+    if user is None:
+        return failure_response("User not found")
+
+    schedules = [s.serialize() for s in user.generated_schedules]
+    return success_response({"schedules": schedules})
+
 
 @app.route("/schedules/<int:user_id>/<int:sched_id>/")
 def get_schedule(user_id, sched_id):
     """Get full details of a specific schedule."""
-    pass
+    schedule = GeneratedSchedule.query.filter_by(id=sched_id, user_id=user_id).first()
+    if schedule is None:
+        return failure_response("Schedule not found")
+
+    return success_response(schedule.serialize())
+
 
 @app.route("/schedules/<int:user_id>/<int:sched_id>/", methods=["DELETE"])
 def delete_schedule(user_id, sched_id):
     """Delete a saved schedule."""
-    pass
+    schedule = GeneratedSchedule.query.filter_by(id=sched_id, user_id=user_id).first()
+    if schedule is None:
+        return failure_response("Schedule not found")
+
+    db.session.delete(schedule)
+    db.session.commit()
+    return success_response(schedule.serialize())
+
 
 @app.route("/schedule/generate/", methods=["POST"])
 def generate_schedule():
     """Generate optimal schedules for a user using LLM + logic."""
-    pass
+    body = json.loads(request.data)
+    user_id = body.get("user_id")
+    user = User.query.get(user_id)
+    if user is None:
+        return failure_response("User not found", code=404)
+
+    completed = {c.course_number for c in user.completed_courses}
+    availability = user.availability
+    core_courses = [c.course_number for c in CoreClass.query.all()]
+
+    eligible_courses = []
+    for course in Course.query.all():
+        prereqs = [
+            p.prereq_number
+            for p in CoursePrereq.query.filter_by(course_number=course.number).all()
+        ]
+        if all(pr in completed for pr in prereqs):
+            eligible_courses.append(course)
+
+    suggested_sections = []
+    for course in eligible_courses:
+        for section in course.sections:
+            suggested_sections.append(section)
+            if len(suggested_sections) >= 5:
+                break
+        if len(suggested_sections) >= 5:
+            break
+
+    new_schedule = GeneratedSchedule(
+        user_id=user_id,
+        score=1.0,
+        rationale="Auto-generated based on user input and prereqs",
+    )
+    db.session.add(new_schedule)
+    db.session.commit()
+
+    for sec in suggested_sections:
+        db.session.add(ScheduleSection(schedule_id=new_schedule.id, section_id=sec.id))
+
+    db.session.commit()
+    return success_response(new_schedule.serialize(), 201)
 
 
 if __name__ == "__main__":
