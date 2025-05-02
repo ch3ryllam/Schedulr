@@ -151,8 +151,8 @@ class CourseSection(db.Model):
     course_number = db.Column(db.String, db.ForeignKey("course.number"), nullable=False)
     section = db.Column(db.String, nullable=False)
     days = db.Column(db.String, nullable=False)
-    start_min = db.Column(db.Integer, nullable=False)
-    end_min = db.Column(db.Integer, nullable=False)
+    start_min = db.Column(db.Integer, nullable=True)
+    end_min = db.Column(db.Integer, nullable=True)
 
     schedule_sections = db.relationship("ScheduleSection", backref="section")
 
