@@ -1,2 +1,0 @@
-Hack Challenge App
-
