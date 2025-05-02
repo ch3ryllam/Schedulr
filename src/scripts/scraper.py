@@ -26,7 +26,7 @@ and adds relevant details to their respective tables.
 #  - Start_time (in minutes since 00:00)
 #  - End_time (in minutes since 00:00)
 
-API_URL = "https://classes.cornell.edu/api/2.0/config/FA25/class.json?subject=CS"
+API_URL = "https://classes.cornell.edu/api/2.0/search/classes.json?roster=FA25&subject=CS"
 
 
 def time_to_min(time):
@@ -45,26 +45,93 @@ def extract_prereqs(text):
     matches = re.findall(pattern, text)
     return [f"{dept} {num}" for dept, num in matches]
 
+def get_data_ready():
+    """
+    Prepares the data for man handling.
+    """
+    raw_data = requests.get(API_URL)
+    raw_data.raise_for_status()
+    data = raw_data.json()["data"]["classes"]
+
+    return data
+
+data = get_data_ready()
+
 def seed_courses(app):
-    pass
+    """
+    Adds all courses to the database.
+    """
+    if Course.query.first():
+        return
+    for clss in data:
+        num = f"CS {clss['catalogNbr']}"
+        name = clss.get("titleLong", "").strip()
+        description = clss.get("descr", "").strip()
+        credits = int(float(clss.get("minUnits", 0)))
+    
+        course = db.session.get(Course, num)
+        if not course:
+            course = Course(number= num, name= name, description= description, credits= credits)
+            db.session.add(course)
+    
+    db.session.commit()
 
 def seed_prereq(app):
-    pass
+    """
+    Adds prereqs to the database.
+    """
+    if CoursePrereq.query.first():
+        return
+    for clss in data:
+        num = f"CS {clss['catalogNbr']}"        
+        prereq_text = clss.get("catalogPrereqCoreq", "")
+        
+        for prereq in extract_prereqs(prereq_text):
+            exists = (
+                db.session.query(CoursePrereq).filter_by(course_number=num, 
+                                                         prereq_number=prereq).first())
+            if not exists:
+                real_prereq = CoursePrereq(course_number= num, prereq_number= prereq)
+                db.session.add(real_prereq)
+    db.session.commit()
 
 def seed_schedules(app):
-    pass
+    """
+    Adds the sections into the database.
+    """
+    if CourseSection.query.first():
+        return
+    for clss in data:
+        num = f"CS {clss['catalogNbr']}"  
+        group = clss.get("enrollGroups", [])
+        for section in group.get("classSections", []):
+            section_label = section.get("ssrComponent", "").strip()
+
+            for meet_time in section.get("meetings", []):
+                days  = meet_time.get("pattern", "").strip()
+                start = time_to_min(meet_time.get("timeStart", ""))
+                end   = time_to_min(meet_time.get("timeEnd", ""))
+
+                course_section = CourseSection(course_number= num, section= section_label, 
+                                               days= days or "TBA", start_min= start, end_min= end)
+                db.session.add(course_section)
+    
+    db.session.commit()
 
 
 # Not a scraper but its nicer here
 def seed_core(app):
-    with app.app_context():
-        core_courses = [CoreClass(course_number= "CS 1110"), CoreClass(course_number= "CS 1112"), CoreClass(course_number= "CS 2110"), 
+    """
+    Adds all core courses into the database.
+    """
+    if CoreClass.query.first():
+        return
+    core_courses = [CoreClass(course_number= "CS 1110"), CoreClass(course_number= "CS 1112"), CoreClass(course_number= "CS 2110"), 
                         CoreClass(course_number= "CS 2800"), CoreClass(course_number= "CS 3110"), CoreClass(course_number= "CS 3410"), 
                         CoreClass(course_number= "CS 3420"), CoreClass(course_number= "CS 4410"), CoreClass(course_number= "CS 4414"), 
                         CoreClass(course_number= "CS 4820")]
-        for course in core_courses:
-            if not CoreClass.query.filter_by(course_number= course.course_number).first():
-                db.session.add(course) 
+    for course in core_courses:
+        if not CoreClass.query.filter_by(course_number= course.course_number).first():
+            db.session.add(course) 
         
-        db.session.commit()
-        print("Seeded core courses")
+    db.session.commit()
