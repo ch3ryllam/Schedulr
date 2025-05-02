@@ -1,7 +1,7 @@
 import requests
 import re
 from datetime import datetime
-from db import db, Course, CoursePrereq, CourseSection, CoreClass
+from ..db import db, Course, CoursePrereq, CourseSection, CoreClass
 
 """
 Scraper that goes through the cornell CS catalogue using the cornell API 
@@ -71,7 +71,7 @@ def get_data_ready():
 data = get_data_ready()
 
 
-def seed_courses(app):
+def seed_courses():
     """
     Adds all courses to the database.
     """
@@ -93,7 +93,7 @@ def seed_courses(app):
     db.session.commit()
 
 
-def seed_prereq(app):
+def seed_prereq():
     """
     Adds prereqs to the database.
     """
@@ -115,7 +115,7 @@ def seed_prereq(app):
     db.session.commit()
 
 
-def seed_schedules(app):
+def seed_schedules():
     """
     Adds the sections into the database.
     """
@@ -156,7 +156,7 @@ def seed_schedules(app):
 
 
 # Not a scraper but its nicer here
-def seed_core(app):
+def seed_core():
     """
     Adds all core courses into the database.
     """

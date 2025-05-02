@@ -204,7 +204,7 @@ class GeneratedSchedule(db.Model):
     __tablename__ = "generated_schedule"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    score = db.Column(db.Float)
+    # score = db.Column(db.Float)
     rationale = db.Column(db.String)
 
     schedule_sections = db.relationship(
@@ -218,7 +218,7 @@ class GeneratedSchedule(db.Model):
         return {
             "id": self.id,
             "user_id": self.user_id,
-            "score": self.score,
+            # "score": self.score,
             "rationale": self.rationale,
             "sections": [s.section.serialize() for s in self.schedule_sections],
         }
@@ -228,7 +228,7 @@ class GeneratedSchedule(db.Model):
             "id": self.id,
             "user_id": self.user_id,
             "rationale": self.rationale,
-            "score": self.score,
+            # "score": self.score,
         }
 
 
