@@ -121,25 +121,11 @@ def seed_schedules(app):
     """
     if CourseSection.query.first():
         return
-    # for clss in data:
-    #     num = f"CS {clss['catalogNbr']}"
-    #     group = clss.get("enrollGroups", [])
-    #     for section in group[0].get("classSections", []):
-    #         section_label = section.get("ssrComponent", "").strip()
 
-    #         for meet_time in section.get("meetings", []):
-    #             days  = meet_time.get("pattern", "").strip()
-    #             start = time_to_min(meet_time.get("timeStart", ""))
-    #             end   = time_to_min(meet_time.get("timeEnd", ""))
-
-    #             course_section = CourseSection(course_number= num, section= section_label,
-    #                                            days= days or "TBA", start_min= start, end_min= end)
-    #             db.session.add(course_section)
     for clss in data:
         catalog = clss["catalogNbr"]
         num = f"CS {catalog}"
         group = clss.get("enrollGroups", [])
-        print(group)
         for sec in group[0].get("classSections", []):
             label = sec.get("ssrComponent", "").strip()
             section_number = sec.get("section", "").strip()
