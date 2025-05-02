@@ -11,6 +11,12 @@ def gpt_rank_courses(courses, interests, remaining_slots):
         prompt = f"""
             You are a course advisor helping a CS undergraduate student plan their next semester.
             The student is interested in: {interests}
+
+            Please prioritize the following when ranking courses:
+            - Electives that are **closely related to the student's interests** (based on course title).
+            - **Higher-level CS courses** (typically 4000+), assuming prerequisites are met.
+            - Avoid course conflicts and follow all rules below.
+
             Rules & Assumptions:
             - The student has completed all non-CS prerequisites (e.g., Math or Engineering requirements).
             - The student may only take **one of each course pair**: CS 1110 or CS 1112, CS 2110 or CS 2112, CS 2800 or CS 2802, CS 3410 or CS 3420, CS 3700 or CS 3780, CS 4410 or CS 4414.
