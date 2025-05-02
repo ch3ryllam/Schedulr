@@ -1,4 +1,51 @@
-# Course App API Specification
+
+### Get All Courses
+**GET /api/courses/**
+
+Returns a list of all CS courses in the catalog.
+
+#### Response
+**Status Code**: 200 OK  
+**Body**:
+```json
+{
+  "courses": [
+    {
+      "number": "CS 1110",
+      "name": "Intro to Computing Using Python",
+      "description": "Introduction to programming and problem solving using Python.",
+      "credits": 4,
+      "prerequisites": [],
+      "required_by": ["CS 2110", "CS 2800"]
+    },
+    {
+      "number": "CS 2110",
+      "name": "Object-Oriented Programming and Data Structures",
+      "description": "Intermediate programming with a focus on data structures and object-oriented design.",
+      "credits": 3,
+      "prerequisites": ["CS 1110"],
+      "required_by": ["CS 3110", "CS 3700"]
+    }
+  ]
+}
+```
+
+- `number`: Course code (e.g., "CS 1110")
+- `name`: Full course title
+- `description`: Short course summary
+- `credits`: Number of credit hours
+- `prerequisites`: List of course numbers required before taking this course
+- `required_by`: List of course numbers that list this course as a prerequisite
+
+
+# Course Scheduling API Specification
+
+## Base URL
+```
+http://localhost:5000
+```
+
+---
 
 ## Users
 
@@ -11,7 +58,7 @@
   "netid": "rm834",
   "graduation_year": 2026,
   "interests": "AI, systems, HCI",
-  "availability": "111111111111111111111111111111111111111111111111111111111111" // binary string of 168 chars (7 days * 24 hours)
+  "availability": "111111111111111111111111111111111111111111111111111111111111"
 }
 ```
 
@@ -99,7 +146,13 @@ Fields are optional (must include at least one):
 ```json
 <HTTP STATUS 200>
 {
-  "courses": [ { "number": "CS 1110", "name": "Intro to CS", ... }, ... ]
+  "courses": [ { 
+    "number": "CS 1110", 
+    "name": "Intro to CS", 
+    "description": "Introduction to programming and problem solving using Python.",
+    "credits": 4,
+    "prerequisites": [],
+    "required_by": ["CS 2110", "CS 2800"] }, ... ]
 }
 ```
 
@@ -111,30 +164,7 @@ Fields are optional (must include at least one):
 **Response**
 ```json
 <HTTP STATUS 200>
-{
-  "number": "CS 2110",
-  "name": "Object-Oriented Programming and Data Structures",
-  "description": "<string>",
-  "credits": <int>,
-  "sections": [
-    {
-      "id": <int>,
-      "section": "<string>",
-      "days": "<string>",
-      "start_min": <int>,
-      "end_min": <int>
-    },
-    ...
-  ],
-  "prereqs": [
-    { "prereq_number": "<CS course number>" },
-    ...
-  ],
-  "required_by": [
-    { "course_number": "<CS course number>" },
-    ...
-  ]
-}
+{ "number": "CS 1110", "name": "Intro to CS", ... }
 ```
 
 ---
