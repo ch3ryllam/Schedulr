@@ -1,10 +1,11 @@
 import os
 from dotenv import load_dotenv
 import json
-import os
 from openai import OpenAI
 from scripts.scraper import seed_core, seed_courses, seed_prereq, seed_schedules
 from flask import Flask, request
+import re
+
 from db import (
     db,
     CompletedCourse,
@@ -18,8 +19,6 @@ from db import (
 )
 
 load_dotenv()
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-
 client = OpenAI()
 
 
@@ -343,18 +342,17 @@ def generate_schedule():
     if user is None:
         return failure_response("User not found", code=404)
 
+    core_courses = {c.course_number for c in CoreClass.query.all()}
+    print("Core CS Courses:", core_courses)
+
     completed = {c.course_number for c in user.completed_courses}
     availability = user.availability
-    core_courses = [c.course_number for c in CoreClass.query.all()]
+    core_courses = {c.course_number for c in CoreClass.query.all()}
+    num_core_completed = len(core_courses & completed)
 
-    eligible_courses = []
-    for course in Course.query.all():
-        prereqs = [
-            p.prereq_number
-            for p in CoursePrereq.query.filter_by(course_number=course.number).all()
-        ]
-        if all(pr in completed for pr in prereqs):
-            eligible_courses.append(course)
+    def is_grad_level(course_number):
+        match = re.match(r"CS (\d{4})", course_number)
+        return int(match.group(1)) >= 5000 if match else False
 
     def is_section_available(section, availability):
         day_index = {"M": 0, "T": 1, "W": 2, "R": 3, "F": 4}
@@ -369,40 +367,116 @@ def generate_schedule():
                     return False
         return True
 
-    available_sections = []
-    for course in eligible_courses:
+    core_sections = []
+    elective_sections = []
+    grad_sections = []
+
+    for course in Course.query.all():
+        if course.number in completed:
+            continue  # skip courses already completed
+        prereqs = [
+            p.prereq_number
+            for p in CoursePrereq.query.filter_by(course_number=course.number).all()
+        ]
+        if not all(pr in completed for pr in prereqs):
+            continue
         for section in course.sections:
-            if is_section_available(section, availability):
-                available_sections.append((course, section))
+            if not is_section_available(section, availability):
+                continue
 
-    def gpt_rank_courses(courses, interests):
-        prompt = f"""
-        The student is interested in: {interests}
-        Please rank the following CS courses from most to least relevant:
-        {', '.join([course.number + ' - ' + course.name for course, _ in courses])}
-        Respond with a comma-separated list of course numbers only in ranked order.
-        """
-        response = client.chat.completions.create(
-            model="gpt-4.1",
-            messages=[
-                {"role": "system", "content": "You are a helpful academic advisor."},
-                {"role": "user", "content": prompt},
-            ],
-        )
-        ranked_numbers = response.choices[0].message.content.split(",")
-        ranked_numbers = [
-            c.strip() for c in ranked_numbers if c.strip().startswith("CS ")
-        ]
-        return [
-            pair for num in ranked_numbers for pair in courses if pair[0].number == num
-        ]
+            pair = (course, section)
+            if is_grad_level(course.number):
+                grad_sections.append(pair)
+            elif course.number in core_courses:
+                core_sections.append(pair)
+            else:
+                elective_sections.append(pair)
 
-    ranked_sections = gpt_rank_courses(available_sections, user.interests)
-    final_sections = [sec for _, sec in ranked_sections[:5]]
+    if not (core_sections or elective_sections or grad_sections):
+        return failure_response("No available course sections match your schedule.")
 
+    final_sections = []
+    added_courses = set()
+
+    # 1. Fill with core classes (up to 3)
+    max_core = min(3 - num_core_completed, len(core_sections))
+    for course, section in core_sections:
+        if course.number not in added_courses:
+            final_sections.append(section)
+            added_courses.add(course.number)
+        if len(final_sections) >= 3:
+            break
+
+    # 2. Fill remaining slots prioritizing interests
+    remaining_slots = 5 - len(final_sections)
+
+    def gpt_rank_courses(courses, interests, max_courses=25):
+        if not interests or len(courses) <= 1:
+            return courses[:remaining_slots]
+        try:
+            prompt = f"""
+            The student is interested in: {interests}
+            Please rank the following CS courses from most to least relevant:
+            {', '.join([course.number + ' - ' + course.name for course, _ in courses])}
+            Respond with a comma-separated list of course numbers only in ranked order.
+            """
+            response = client.chat.completions.create(
+                model="gpt-4.1",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a helpful academic advisor.",
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=0.3,
+            )
+
+            ranked_numbers = response.choices[0].message.content.split(",")
+            ranked_numbers = [c.strip() for c in ranked_numbers if c.strip()]
+
+            ranked = []
+            for num in ranked_numbers:
+                for pair in courses:
+                    if pair[0].number == num and pair not in ranked:
+                        ranked.append(pair)
+
+            for pair in courses:
+                if pair not in ranked:
+                    ranked.append(pair)
+
+            return ranked[:remaining_slots]
+
+        except Exception as e:
+            print(f"GPT Error: {e}")
+            return courses[:remaining_slots]
+
+    if remaining_slots > 0 and elective_sections:
+        elective_sections = gpt_rank_courses(elective_sections, user.interests)
+        for course, section in elective_sections:
+            if course.number not in added_courses:
+                final_sections.append(section)
+                added_courses.add(course.number)
+            if len(final_sections) == 5:
+                break
+
+    # 3. Only consider grad classes if they've completed 3+ core classes
+    remaining_slots = 5 - len(final_sections)
+    if remaining_slots > 0 and num_core_completed >= 3 and grad_sections:
+        for course, section in grad_sections:
+            if course.number not in added_courses:
+                final_sections.append(section)
+                added_courses.add(course.number)
+            if len(final_sections) == 5:
+                break
+
+    final_sections = final_sections[:5]
+
+    # Create the schedule
     new_schedule = GeneratedSchedule(
         user_id=user_id,
         score=1.0,
+        rationale="Prioritized core classes, then ranked electives, then grad-level if eligible.",
     )
     db.session.add(new_schedule)
     db.session.commit()

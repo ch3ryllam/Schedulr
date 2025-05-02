@@ -97,10 +97,12 @@ class User(db.Model):
     # If the 1st char is 1 that means someone is free on monday 12 am - 1 am, etc.
     availability = db.Column(db.String, nullable=True)
 
-    generated_schedules = db.relationship(
-        "GeneratedSchedule", backref="user", lazy=True
+    completed_courses = db.relationship(
+        "CompletedCourse", backref="user", cascade="all, delete-orphan"
     )
-    completed_courses = db.relationship("CompletedCourse", backref="user", lazy=True)
+    generated_schedules = db.relationship(
+        "GeneratedSchedule", backref="user", cascade="all, delete-orphan"
+    )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -208,9 +210,11 @@ class GeneratedSchedule(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     score = db.Column(db.Float)
-    # rationale = db.Column(db.String)
+    rationale = db.Column(db.String)
 
-    sections = db.relationship("ScheduleSection", backref="schedule", lazy=True)
+    schedule_sections = db.relationship(
+        "ScheduleSection", backref="schedule", cascade="all, delete-orphan"
+    )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -220,16 +224,16 @@ class GeneratedSchedule(db.Model):
             "id": self.id,
             "user_id": self.user_id,
             "score": self.score,
-            # "rationale": self.rationale,
-            "sections": [s.serialize() for s in self.sections],
+            "rationale": self.rationale,
+            "sections": [s.section.serialize() for s in self.schedule_sections],
         }
 
     def serialize_no_sections(self):
         return {
             "id": self.id,
             "user_id": self.user_id,
+            "rationale": self.rationale,
             "score": self.score,
-            # "rationale": self.rationale,
         }
 
 
