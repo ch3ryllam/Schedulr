@@ -26,15 +26,23 @@ and adds relevant details to their respective tables.
 #  - Start_time (in minutes since 00:00)
 #  - End_time (in minutes since 00:00)
 
-API_URL = "https://classes.cornell.edu/api/2.0/search/classes.json?roster=FA25&subject=CS"
+API_URL = "https://classes.cornell.edu/api/2.0/search/classes.json?roster=FA24&subject=CS"
 
 
 def time_to_min(time):
     """
     Helper function to convert to minutes since 00:00.
     """
-    dt = datetime.strptime(time.strip().lower(), "%I:%M%p")
-    return dt.hour * 60 + dt.minute
+    t = (time or "").strip()
+    if not t:
+        return None
+    try:
+        # uppercase AM/PM so strptime is happy
+        dt = datetime.strptime(t.upper(), "%I:%M%p")
+        return dt.hour * 60 + dt.minute
+    except ValueError:
+        # malformed time string—skip it
+        return None
 
 def extract_prereqs(text):
     """
@@ -66,8 +74,8 @@ def seed_courses(app):
     for clss in data:
         num = f"CS {clss['catalogNbr']}"
         name = clss.get("titleLong", "").strip()
-        description = clss.get("descr", "").strip()
-        credits = int(float(clss.get("minUnits", 0)))
+        description = clss.get("description", "").strip()
+        credits = int(float(clss["enrollGroups"][0].get("unitsMinimum", 0)))
     
         course = db.session.get(Course, num)
         if not course:
@@ -101,21 +109,39 @@ def seed_schedules(app):
     """
     if CourseSection.query.first():
         return
+    # for clss in data:
+    #     num = f"CS {clss['catalogNbr']}"  
+    #     group = clss.get("enrollGroups", [])
+    #     for section in group[0].get("classSections", []):
+    #         section_label = section.get("ssrComponent", "").strip()
+
+    #         for meet_time in section.get("meetings", []):
+    #             days  = meet_time.get("pattern", "").strip()
+    #             start = time_to_min(meet_time.get("timeStart", ""))
+    #             end   = time_to_min(meet_time.get("timeEnd", ""))
+
+    #             course_section = CourseSection(course_number= num, section= section_label, 
+    #                                            days= days or "TBA", start_min= start, end_min= end)
+    #             db.session.add(course_section)
     for clss in data:
-        num = f"CS {clss['catalogNbr']}"  
+        catalog = clss["catalogNbr"]
+        num = f"CS {catalog}"
         group = clss.get("enrollGroups", [])
-        for section in group.get("classSections", []):
-            section_label = section.get("ssrComponent", "").strip()
+        print(group)
+        for sec in group[0].get("classSections", []):
+            label = sec.get("ssrComponent", "").strip()
+            section_number = sec.get("section", "").strip()
+            section_label = label + " " + section_number
+            for mt in sec.get("meetings", []):
+                days  = mt.get("pattern", "")
+                raw_start = mt.get("timeStart", "")
+                raw_end   = mt.get("timeEnd", "")
 
-            for meet_time in section.get("meetings", []):
-                days  = meet_time.get("pattern", "").strip()
-                start = time_to_min(meet_time.get("timeStart", ""))
-                end   = time_to_min(meet_time.get("timeEnd", ""))
-
+                start = time_to_min(raw_start)
+                end   = time_to_min(raw_end)
                 course_section = CourseSection(course_number= num, section= section_label, 
                                                days= days or "TBA", start_min= start, end_min= end)
-                db.session.add(course_section)
-    
+                db.session.add(course_section)    
     db.session.commit()
 
 
