@@ -72,7 +72,7 @@ def hello_world():
 def create_user():
     """
     Create a new user profile.
-    Takes in netid and graduation_year.
+    Takes in netid, graduation_year, interests, and availability.
     """
     body = json.loads(request.data)
     netid, grad_year = body.get("netid"), body.get("graduation_year")
@@ -507,4 +507,5 @@ def generate_schedule():
 
 
 if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
     app.run(host="0.0.0.0", port=5000, debug=True)
