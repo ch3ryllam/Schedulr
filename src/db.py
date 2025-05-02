@@ -88,13 +88,8 @@ class User(db.Model):
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     netid = db.Column(db.String, nullable=False)
-
-    # ex. SP27, FA26
     graduation_year = db.Column(db.String, nullable=False)
     interests = db.Column(db.String, nullable=True)
-
-    # 168 char string with 0s and 1s representing availability.
-    # If the 1st char is 1 that means someone is free on monday 12 am - 1 am, etc.
     availability = db.Column(db.String, nullable=True)
 
     completed_courses = db.relationship(
