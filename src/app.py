@@ -342,9 +342,6 @@ def generate_schedule():
     if user is None:
         return failure_response("User not found", code=404)
 
-    core_courses = {c.course_number for c in CoreClass.query.all()}
-    print("Core CS Courses:", core_courses)
-
     completed = {c.course_number for c in user.completed_courses}
     availability = user.availability
     core_courses = {c.course_number for c in CoreClass.query.all()}
@@ -367,23 +364,40 @@ def generate_schedule():
                     return False
         return True
 
+    def has_prereqs(course, completed):
+        number = course.number
+        prereq_rules = {
+            "CS 2110": [["CS 1110", "CS 1112"]],
+            "CS 2112": [["CS 1110", "CS 1112"]],
+            "CS 3110": [["CS 2110"], ["CS 2800", "CS 2802"]],
+            "CS 3700": [["CS 2110"], ["CS 2800", "CS 2802"]],
+            "CS 4410": [["CS 3410", "CS 3420"]],
+            "CS 4414": [["CS 3410", "CS 3420"]],
+        }
+
+        if number in prereq_rules:
+            return all(
+                any(pr in completed for pr in group) for group in prereq_rules[number]
+            )
+
+        prereqs = [
+            p.prereq_number
+            for p in CoursePrereq.query.filter_by(course_number=number).all()
+        ]
+        return all(pr in completed for pr in prereqs)
+
     core_sections = []
     elective_sections = []
     grad_sections = []
 
     for course in Course.query.all():
         if course.number in completed:
-            continue  # skip courses already completed
-        prereqs = [
-            p.prereq_number
-            for p in CoursePrereq.query.filter_by(course_number=course.number).all()
-        ]
-        if not all(pr in completed for pr in prereqs):
+            continue
+        if not has_prereqs(course, completed):
             continue
         for section in course.sections:
             if not is_section_available(section, availability):
                 continue
-
             pair = (course, section)
             if is_grad_level(course.number):
                 grad_sections.append(pair)
@@ -404,7 +418,7 @@ def generate_schedule():
         if course.number not in added_courses:
             final_sections.append(section)
             added_courses.add(course.number)
-        if len(final_sections) >= 3:
+        if len(final_sections) >= max_core:
             break
 
     # 2. Fill remaining slots prioritizing interests
@@ -415,13 +429,23 @@ def generate_schedule():
             return courses[:remaining_slots]
         try:
             prompt = f"""
+            You are a course advisor helping a CS undergraduate student plan their next semester.
             The student is interested in: {interests}
-            Please rank the following CS courses from most to least relevant:
+            Rules & Assumptions:
+            - The student has completed all non-CS prerequisites (e.g., Math or Engineering requirements).
+            - The student may only take **one of each course pair**: CS 1110 or CS 1112, CS 2110 or CS 2112, CS 2800 or CS 2802, CS 3410 or CS 3420, CS 3700 or CS 3780, CS 4410 or CS 4414.
+            - If both are available, choose the **non-honors/default version** (e.g., prefer CS 2110 over 2112, CS 2800 over 2802).
+            - CS 3110 should not be taken concurrently with CS 3410 or 3420.
+            - CS 3110 requires CS 2110 and CS 2800 (2800 can be a corequisite).
+            - CS 3700 requires CS 2110 and CS 2800 as prerequisites.
+            - CS 4410 requires CS 3410 or CS 3420.
+            - Rank only the unique courses (avoid suggesting multiple sections of the same course).
+            Courses to rank:
             {', '.join([course.number + ' - ' + course.name for course, _ in courses])}
             Respond with a comma-separated list of course numbers only in ranked order.
             """
             response = client.chat.completions.create(
-                model="gpt-4.1",
+                model="gpt-3.5-turbo",  # Changed to more reliable model
                 messages=[
                     {
                         "role": "system",
@@ -452,25 +476,19 @@ def generate_schedule():
             return courses[:remaining_slots]
 
     if remaining_slots > 0 and elective_sections:
-        elective_sections = gpt_rank_courses(elective_sections, user.interests)
-        for course, section in elective_sections:
-            if course.number not in added_courses:
+        ranked_electives = gpt_rank_courses(elective_sections, user.interests)
+        for course, section in ranked_electives:
+            if course.number not in added_courses and len(final_sections) < 5:
                 final_sections.append(section)
                 added_courses.add(course.number)
-            if len(final_sections) == 5:
-                break
 
     # 3. Only consider grad classes if they've completed 3+ core classes
     remaining_slots = 5 - len(final_sections)
     if remaining_slots > 0 and num_core_completed >= 3 and grad_sections:
         for course, section in grad_sections:
-            if course.number not in added_courses:
+            if course.number not in added_courses and len(final_sections) < 5:
                 final_sections.append(section)
                 added_courses.add(course.number)
-            if len(final_sections) == 5:
-                break
-
-    final_sections = final_sections[:5]
 
     # Create the schedule
     new_schedule = GeneratedSchedule(
