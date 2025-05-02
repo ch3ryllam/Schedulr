@@ -230,7 +230,7 @@ Fields are optional (must include at least one):
 ## Schedule
 
 ### Generate a Schedule
-**POST** `/schedule/generate/`
+**POST** `/schedules/generate/`
 
 **Request Body**
 ```json
