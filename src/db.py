@@ -35,7 +35,6 @@ class CoursePrereq(db.Model):
     """
 
     __tablename__ = "course_prereq"
-    id = db.Column(db.Integer, primary_key=True)
     course_number = db.Column(db.String, db.ForeignKey("course.number"), primary_key=True, nullable=False)
     prereq_number = db.Column(db.String, db.ForeignKey("course.number"), primary_key=True, nullable=False)
 
@@ -47,6 +46,16 @@ class CoursePrereq(db.Model):
             "id": self.id,
             "course_number": self.course_number,
             "prereq_number": self.prereq_number,
+        }
+    
+    def serialize_without_course(self):
+        return {
+            "prereq_number": self.prereq_number
+        }
+    
+    def serialize_without_prereq(self):
+        return {
+            "course_number": self.course_number
         }
 
 
@@ -127,6 +136,8 @@ class Course(db.Model):
             "description": self.description,
             "credits": self.credits,
             "sections": [s.serialize_no_course() for s in self.sections],
+            "prereqs": [p.serialize_without_course() for p in self.prereqs],
+            "required_by": [rb.serialize_without_prereq() for rb in self.required_by]
         }
 
 
@@ -225,24 +236,4 @@ class ScheduleSection(db.Model):
             "section_id": self.section_id,
         }
     
-def seed_courses(app):
-    pass
 
-def seed_prereq(app):
-    pass
-
-def seed_schedules(app):
-    pass
-
-def seed_core(app):
-    with app.app_context():
-        core_courses = [CoreClass(course_number= "CS 1110"), CoreClass(course_number= "CS 1112"), CoreClass(course_number= "CS 2110"), 
-                        CoreClass(course_number= "CS 2800"), CoreClass(course_number= "CS 3110"), CoreClass(course_number= "CS 3410"), 
-                        CoreClass(course_number= "CS 3420"), CoreClass(course_number= "CS 4410"), CoreClass(course_number= "CS 4414"), 
-                        CoreClass(course_number= "CS 4820")]
-        for course in core_courses:
-            if not CoreClass.query.filter_by(course_number= course.course_number).first():
-                db.session.add(course) 
-        
-        db.session.commit()
-        print("Seeded core courses")
