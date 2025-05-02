@@ -9,8 +9,12 @@ class CompletedCourse(db.Model):
     """
 
     __tablename__ = "completed_course"
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), primary_key=True, nullable=False)
-    course_number = db.Column(db.String, db.ForeignKey("course.number"), primary_key=True, nullable=False)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("user.id"), primary_key=True, nullable=False
+    )
+    course_number = db.Column(
+        db.String, db.ForeignKey("course.number"), primary_key=True, nullable=False
+    )
 
     course = db.relationship("Course", lazy=True)
 
@@ -22,7 +26,7 @@ class CompletedCourse(db.Model):
             "user_id": self.user_id,
             "course_number": self.course_number,
         }
-    
+
     def serialize_without_user_id(self):
         return {
             "course_number": self.course_number,
@@ -35,8 +39,12 @@ class CoursePrereq(db.Model):
     """
 
     __tablename__ = "course_prereq"
-    course_number = db.Column(db.String, db.ForeignKey("course.number"), primary_key=True, nullable=False)
-    prereq_number = db.Column(db.String, db.ForeignKey("course.number"), primary_key=True, nullable=False)
+    course_number = db.Column(
+        db.String, db.ForeignKey("course.number"), primary_key=True, nullable=False
+    )
+    prereq_number = db.Column(
+        db.String, db.ForeignKey("course.number"), primary_key=True, nullable=False
+    )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -47,16 +55,12 @@ class CoursePrereq(db.Model):
             "course_number": self.course_number,
             "prereq_number": self.prereq_number,
         }
-    
+
     def serialize_without_course(self):
-        return {
-            "prereq_number": self.prereq_number
-        }
-    
+        return {"prereq_number": self.prereq_number}
+
     def serialize_without_prereq(self):
-        return {
-            "course_number": self.course_number
-        }
+        return {"course_number": self.course_number}
 
 
 class CoreClass(db.Model):
@@ -65,7 +69,9 @@ class CoreClass(db.Model):
     """
 
     __tablename__ = "core_class"
-    course_number = db.Column(db.String, db.ForeignKey("course.number"), nullable=False, primary_key=True)
+    course_number = db.Column(
+        db.String, db.ForeignKey("course.number"), nullable=False, primary_key=True
+    )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -83,15 +89,17 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     netid = db.Column(db.String, nullable=False)
 
-    #ex. SP27, FA26
+    # ex. SP27, FA26
     graduation_year = db.Column(db.String, nullable=False)
     interests = db.Column(db.String, nullable=True)
 
-    #168 char string with 0s and 1s representing availability. 
-    #If the 1st char is 1 that means someone is free on monday 12 am - 1 am, etc.
+    # 168 char string with 0s and 1s representing availability.
+    # If the 1st char is 1 that means someone is free on monday 12 am - 1 am, etc.
     availability = db.Column(db.String, nullable=True)
 
-    generated_schedules = db.relationship("GeneratedSchedule", backref="user", lazy=True)
+    generated_schedules = db.relationship(
+        "GeneratedSchedule", backref="user", lazy=True
+    )
     completed_courses = db.relationship("CompletedCourse", backref="user", lazy=True)
 
     def __init__(self, **kwargs):
@@ -104,7 +112,9 @@ class User(db.Model):
             "graduation_year": self.graduation_year,
             "interests": self.interests,
             "availability": self.availability,
-            "completed_courses": [c.serialize_without_user_id() for c in self.completed_courses],
+            "completed_courses": [
+                c.serialize_without_user_id() for c in self.completed_courses
+            ],
             "generated_schedules": [
                 s.serialize_no_sections() for s in self.generated_schedules
             ],
@@ -123,8 +133,18 @@ class Course(db.Model):
     credits = db.Column(db.Integer)
 
     sections = db.relationship("CourseSection", backref="course", lazy=True)
-    prereqs = db.relationship("CoursePrereq", foreign_keys="CoursePrereq.course_number", backref="course", lazy=True)
-    required_by = db.relationship("CoursePrereq", foreign_keys="CoursePrereq.prereq_number", backref="prereq", lazy=True)
+    prereqs = db.relationship(
+        "CoursePrereq",
+        foreign_keys="CoursePrereq.course_number",
+        backref="course",
+        lazy=True,
+    )
+    required_by = db.relationship(
+        "CoursePrereq",
+        foreign_keys="CoursePrereq.prereq_number",
+        backref="prereq",
+        lazy=True,
+    )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -137,7 +157,7 @@ class Course(db.Model):
             "credits": self.credits,
             "sections": [s.serialize_no_course() for s in self.sections],
             "prereqs": [p.serialize_without_course() for p in self.prereqs],
-            "required_by": [rb.serialize_without_prereq() for rb in self.required_by]
+            "required_by": [rb.serialize_without_prereq() for rb in self.required_by],
         }
 
 
@@ -188,7 +208,7 @@ class GeneratedSchedule(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     score = db.Column(db.Float)
-    rationale = db.Column(db.String)
+    # rationale = db.Column(db.String)
 
     sections = db.relationship("ScheduleSection", backref="schedule", lazy=True)
 
@@ -200,7 +220,7 @@ class GeneratedSchedule(db.Model):
             "id": self.id,
             "user_id": self.user_id,
             "score": self.score,
-            "rationale": self.rationale,
+            # "rationale": self.rationale,
             "sections": [s.serialize() for s in self.sections],
         }
 
@@ -209,7 +229,7 @@ class GeneratedSchedule(db.Model):
             "id": self.id,
             "user_id": self.user_id,
             "score": self.score,
-            "rationale": self.rationale,
+            # "rationale": self.rationale,
         }
 
 
@@ -220,7 +240,10 @@ class ScheduleSection(db.Model):
 
     __tablename__ = "schedule_section"
     schedule_id = db.Column(
-        db.Integer, db.ForeignKey("generated_schedule.id"), nullable=False, primary_key=True
+        db.Integer,
+        db.ForeignKey("generated_schedule.id"),
+        nullable=False,
+        primary_key=True,
     )
     section_id = db.Column(
         db.Integer, db.ForeignKey("course_section.id"), nullable=False, primary_key=True
@@ -231,9 +254,6 @@ class ScheduleSection(db.Model):
 
     def serialize(self):
         return {
-            "id": self.id,
             "schedule_id": self.schedule_id,
             "section_id": self.section_id,
         }
-    
-

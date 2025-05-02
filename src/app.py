@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 import json
 import os
 from openai import OpenAI
-from openai import OpenAI
 from scripts.scraper import seed_core, seed_courses, seed_prereq, seed_schedules
 from flask import Flask, request
 from db import (
@@ -283,6 +282,15 @@ def list_sections():
     return success_response({"sections": [section.serialize() for section in sections]})
 
 
+@app.route("/sections/<int:section_id>/")
+def get_section(section_id):
+    """Return a single course section by its ID."""
+    section = CourseSection.query.get(section_id)
+    if section is None:
+        return failure_response("Section not found", 404)
+    return success_response(section.serialize())
+
+
 @app.route("/core-sets/")
 def get_core_courses():
     """
@@ -395,7 +403,6 @@ def generate_schedule():
     new_schedule = GeneratedSchedule(
         user_id=user_id,
         score=1.0,
-        rationale="Ranked using GPT based on interests and availability.",
     )
     db.session.add(new_schedule)
     db.session.commit()
@@ -408,4 +415,4 @@ def generate_schedule():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
