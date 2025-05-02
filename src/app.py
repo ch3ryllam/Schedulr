@@ -1,7 +1,6 @@
 import json
 import os
-from dotenv import load_dotenv
-import openai
+from openai import OpenAI
 from scripts.scraper import seed_core, seed_courses, seed_prereq, seed_schedules
 from flask import Flask, request
 from db import (
@@ -16,8 +15,7 @@ from db import (
     ScheduleSection,
 )
 
-load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI()
 
 def create_app():
 
@@ -369,8 +367,8 @@ def generate_schedule():
         {', '.join([course.number + ' - ' + course.name for course, _ in courses])}
         Respond with a comma-separated list of course numbers only in ranked order.
         """
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+        response = client.chat.completions.create(
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": "You are a helpful academic advisor."},
                 {"role": "user", "content": prompt},
