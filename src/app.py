@@ -2,11 +2,11 @@ import os
 from dotenv import load_dotenv
 import json
 from openai import OpenAI
-from scripts.scraper import seed_core, seed_courses, seed_prereq, seed_schedules
+from course_app.app.scripts.scraper import seed_core, seed_courses, seed_prereq, seed_schedules
 from flask import Flask, request
 import re
 
-from db import (
+from course_app.app.db import (
     db,
     CompletedCourse,
     CoursePrereq,
