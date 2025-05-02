@@ -302,7 +302,9 @@ def get_core_courses():
 # Schedule routes
 @app.route("/schedules/<int:user_id>/")
 def list_schedules(user_id):
-    """List all generated schedules for a user."""
+    """
+    List all generated schedules for a user.
+    """
     user = User.query.get(user_id)
     if user is None:
         return failure_response("User not found")
@@ -313,7 +315,9 @@ def list_schedules(user_id):
 
 @app.route("/schedules/<int:user_id>/<int:sched_id>/")
 def get_schedule(user_id, sched_id):
-    """Get full details of a specific schedule."""
+    """
+    Get full details of a specific schedule.
+    """
     schedule = GeneratedSchedule.query.filter_by(id=sched_id, user_id=user_id).first()
     if schedule is None:
         return failure_response("Schedule not found")
@@ -323,7 +327,9 @@ def get_schedule(user_id, sched_id):
 
 @app.route("/schedules/<int:user_id>/<int:sched_id>/", methods=["DELETE"])
 def delete_schedule(user_id, sched_id):
-    """Delete a saved schedule."""
+    """
+    Delete a saved schedule.
+    """
     schedule = GeneratedSchedule.query.filter_by(id=sched_id, user_id=user_id).first()
     if schedule is None:
         return failure_response("Schedule not found")
@@ -335,7 +341,9 @@ def delete_schedule(user_id, sched_id):
 
 @app.route("/schedule/generate/", methods=["POST"])
 def generate_schedule():
-    """Generate optimal schedules for a user using LLM + logic."""
+    """
+    Generate optimal schedules for a user using LLM + logic.
+    """
     body = json.loads(request.data)
     user_id = body.get("user_id")
     user = User.query.get(user_id)
@@ -348,10 +356,16 @@ def generate_schedule():
     num_core_completed = len(core_courses & completed)
 
     def is_grad_level(course_number):
+        """
+        Checks if a course is grad level (course num >= 5000).
+        """
         match = re.match(r"CS (\d{4})", course_number)
         return int(match.group(1)) >= 5000 if match else False
 
     def is_section_available(section, availability):
+        """
+        Checks if a student has availability for a class.
+        """
         day_index = {"M": 0, "T": 1, "W": 2, "R": 3, "F": 4}
         for d in section.days:
             if d not in day_index:
@@ -365,6 +379,9 @@ def generate_schedule():
         return True
 
     def has_prereqs(course, completed):
+        """
+        Checks if a student has the proper preqreqs.
+        """
         number = course.number
         prereq_rules = {
             "CS 2110": [["CS 1110", "CS 1112"]],
@@ -425,6 +442,9 @@ def generate_schedule():
     remaining_slots = 5 - len(final_sections)
 
     def gpt_rank_courses(courses, interests, max_courses=25):
+        """
+        Has ChatGPT give its ranking of what courses a student should take. 
+        """
         if not interests or len(courses) <= 1:
             return courses[:remaining_slots]
         try:
@@ -507,5 +527,4 @@ def generate_schedule():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
     app.run(host="0.0.0.0", port=5000, debug=True)
