@@ -1,6 +1,6 @@
 import json
 from flask import Blueprint, request
-from ..db import db, User, CompletedCourse
+from app.models import db, User, CompletedCourse
 from ..utils import success_response, failure_response
 
 users_bp = Blueprint("users", __name__, url_prefix="/users")

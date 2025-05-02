@@ -1,7 +1,7 @@
 import requests
 import re
 from datetime import datetime
-from ..db import db, Course, CoursePrereq, CourseSection, CoreClass
+from app.models import db, Course, CoursePrereq, CourseSection, CoreClass
 
 """
 Scraper that goes through the cornell CS catalogue using the cornell API 

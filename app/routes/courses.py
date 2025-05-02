@@ -1,5 +1,5 @@
 from flask import Blueprint
-from ..db import Course, CourseSection, CoreClass
+from app.models import Course, CourseSection, CoreClass
 from ..utils import success_response, failure_response
 
 courses_bp = Blueprint("courses", __name__, url_prefix="/courses")

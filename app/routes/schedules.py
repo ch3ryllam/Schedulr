@@ -1,7 +1,7 @@
 import json
 import re
 from flask import Blueprint, request
-from ..db import (
+from app.models import (
     db,
     User,
     GeneratedSchedule,

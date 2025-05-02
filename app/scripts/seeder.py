@@ -1,6 +1,6 @@
 from flask.cli import with_appcontext
 import click
-from ..db import db
+from app.models import db
 from ..scripts.scraper import seed_courses, seed_core, seed_prereq, seed_schedules
 
 

@@ -2,7 +2,7 @@ from flask import Flask
 from dotenv import load_dotenv
 import os
 
-from .db import db
+from app.models import db
 from .routes import blueprints
 
 load_dotenv()
