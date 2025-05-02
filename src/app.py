@@ -1,5 +1,6 @@
 import json
 import os
+from dotenv import load_dotenv
 import openai
 from scripts.scraper import seed_core, seed_courses, seed_prereq, seed_schedules
 from flask import Flask, request
@@ -15,6 +16,7 @@ from db import (
     ScheduleSection,
 )
 
+load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def create_app():
