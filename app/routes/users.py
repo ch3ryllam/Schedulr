@@ -44,7 +44,9 @@ def all_users():
 
 @users_bp.route("/<int:user_id>/")
 def get_user(user_id):
-    """Get user profile by ID."""
+    """
+    Get user profile by ID.
+    """
     user = User.query.filter_by(id=user_id).first()
     if user is None:
         return failure_response("User not found.")

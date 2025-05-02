@@ -19,7 +19,9 @@ schedules_bp = Blueprint("schedules", __name__, url_prefix="/schedules")
 
 @schedules_bp.route("/<int:user_id>/")
 def list_schedules(user_id):
-    """List all generated schedules for a user."""
+    """
+    List all generated schedules for a user.
+    """
     user = User.query.get(user_id)
     if user is None:
         return failure_response("User not found")
@@ -30,7 +32,9 @@ def list_schedules(user_id):
 
 @schedules_bp.route("/<int:user_id>/<int:sched_id>/")
 def get_schedule(user_id, sched_id):
-    """Get full details of a specific schedule."""
+    """
+    Get full details of a specific schedule.
+    """
     schedule = GeneratedSchedule.query.filter_by(id=sched_id, user_id=user_id).first()
     if schedule is None:
         return failure_response("Schedule not found")
@@ -40,7 +44,9 @@ def get_schedule(user_id, sched_id):
 
 @schedules_bp.route("/<int:user_id>/<int:sched_id>/", methods=["DELETE"])
 def delete_schedule(user_id, sched_id):
-    """Delete a saved schedule."""
+    """
+    Delete a saved schedule.
+    """
     schedule = GeneratedSchedule.query.filter_by(id=sched_id, user_id=user_id).first()
     if schedule is None:
         return failure_response("Schedule not found")
@@ -52,7 +58,9 @@ def delete_schedule(user_id, sched_id):
 
 @schedules_bp.route("/generate/", methods=["POST"])
 def generate_schedule():
-    """Generate optimal schedules for a user using LLM + logic."""
+    """
+    Generate optimal schedules for a user using LLM + logic.
+    """
     body = json.loads(request.data)
     user_id = body.get("user_id")
     user = User.query.get(user_id)

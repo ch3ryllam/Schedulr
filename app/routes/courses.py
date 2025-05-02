@@ -7,14 +7,18 @@ courses_bp = Blueprint("courses", __name__, url_prefix="/courses")
 
 @courses_bp.route("/")
 def list_courses():
-    """Return all CS courses in the catalog."""
+    """
+    Return all CS courses in the catalog.
+    """
     courses = Course.query.all()
     return success_response({"courses": [course.serialize() for course in courses]})
 
 
 @courses_bp.route("/<int:number>/")
 def get_course(number):
-    """Get info about a single course."""
+    """
+    Get info about a single course.
+    """
     number_str = f"CS {number}"
     course = Course.query.get(number_str)
     if course is None:
@@ -24,14 +28,18 @@ def get_course(number):
 
 @courses_bp.route("/sections/")
 def list_sections():
-    """Return all CS course sections (Fall 2025)."""
+    """
+    Return all CS course sections (Fall 2025).
+    """
     sections = CourseSection.query.all()
     return success_response({"sections": [section.serialize() for section in sections]})
 
 
 @courses_bp.route("/sections/<int:section_id>/")
 def get_section(section_id):
-    """Return a single course section by its ID."""
+    """
+    Return a single course section by its ID.
+    """
     section = CourseSection.query.get(section_id)
     if section is None:
         return failure_response("Section not found", 404)
