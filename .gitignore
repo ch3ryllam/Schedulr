@@ -6,8 +6,4 @@ instance/
 *.db
 *.sqlite3
 .DS_Store
-<<<<<<< HEAD
-*.env
-=======
 .env
->>>>>>> aeeb55ca2df2fd03c2cd7f46779580b5ff4458b6
