@@ -85,7 +85,27 @@ Fields are optional (must include at least one):
 **Response**
 ```json
 <HTTP STATUS 200>
-{ ...deleted user data... }
+{
+  "id": <int>,
+  "netid": <string>,
+  "graduation_year": <string>,
+  "interests": <string>,
+  "availability": <string>,
+  "completed_courses": [
+    { "course_number": <string> },
+    ...
+  ],
+  "generated_schedules": [
+    {
+      "id": <int>,
+      "user_id": <int>,
+      "rationale": <string or null>,
+      "score": <float>
+    },
+    ...
+  ]
+}
+
 ```
 
 ---
