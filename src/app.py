@@ -1,4 +1,5 @@
 import json
+import openai
 from scripts.scraper import seed_core, seed_courses, seed_prereq, seed_schedules
 from flask import Flask, request
 from db import (
@@ -338,24 +339,59 @@ def generate_schedule():
         if all(pr in completed for pr in prereqs):
             eligible_courses.append(course)
 
-    suggested_sections = []
+    def is_section_available(section, availability):
+        day_index = {"M": 0, "T": 1, "W": 2, "R": 3, "F": 4}
+        for d in section.days:
+            if d not in day_index:
+                continue
+            day = day_index[d]
+            for m in range(section.start_min, section.end_min, 60):
+                hour = m // 60
+                index = day + 7 * hour
+                if index >= len(availability) or availability[index] == "0":
+                    return False
+        return True
+
+    available_sections = []
     for course in eligible_courses:
         for section in course.sections:
-            suggested_sections.append(section)
-            if len(suggested_sections) >= 5:
-                break
-        if len(suggested_sections) >= 5:
-            break
+            if is_section_available(section, availability):
+                available_sections.append((course, section))
+
+    def gpt_rank_courses(courses, interests):
+        prompt = f"""
+        The student is interested in: {interests}
+        Please rank the following CS courses from most to least relevant:
+        {', '.join([course.number + ' - ' + course.name for course, _ in courses])}
+        Respond with a comma-separated list of course numbers only in ranked order.
+        """
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a helpful academic advisor."},
+                {"role": "user", "content": prompt},
+            ],
+        )
+        ranked_numbers = response.choices[0].message.content.split(",")
+        ranked_numbers = [
+            c.strip() for c in ranked_numbers if c.strip().startswith("CS ")
+        ]
+        return [
+            pair for num in ranked_numbers for pair in courses if pair[0].number == num
+        ]
+
+    ranked_sections = gpt_rank_courses(available_sections, user.interests)
+    final_sections = [sec for _, sec in ranked_sections[:5]]
 
     new_schedule = GeneratedSchedule(
         user_id=user_id,
         score=1.0,
-        rationale="Auto-generated based on user input and prereqs",
+        rationale="Ranked using GPT based on interests and availability.",
     )
     db.session.add(new_schedule)
     db.session.commit()
 
-    for sec in suggested_sections:
+    for sec in final_sections:
         db.session.add(ScheduleSection(schedule_id=new_schedule.id, section_id=sec.id))
 
     db.session.commit()
