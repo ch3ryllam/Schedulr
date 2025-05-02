@@ -5,6 +5,9 @@ client = OpenAI()
 
 
 def gpt_rank_courses(courses, interests, remaining_slots):
+    """
+    Uses OpenAI's GPT to rank elective CS courses for a student based on their interests.
+    """
     if not interests or len(courses) <= 1:
         return courses[:remaining_slots]
     try:
