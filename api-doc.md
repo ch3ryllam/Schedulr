@@ -167,7 +167,6 @@ Fields are optional (must include at least one):
       "id": <int>,
       "user_id": <int>,
       "rationale": <string or null>,
-      "score": <float>
     },
     ...
   ]
@@ -310,7 +309,6 @@ Fields are optional (must include at least one):
 {
   "id": 1,
   "user_id": 1,
-  "score": 1.0,
   "rationale": "...",
   "sections": [
     { "course_number": "CS 2110", "section": "LEC 001", "days": "MWF", ... },
