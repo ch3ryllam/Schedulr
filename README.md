@@ -1,4 +1,8 @@
-# 📚 Schedulr
+<p align="center">
+  <img src="images/icon.png" alt="App Icon" width="60"/>
+</p>
+
+<h1 align="center">📚 Schedulr</h1>
 
 ### *A course planning tool that ranks CS classes and gives you potential schedules based on your interests using AI.*
 
@@ -12,7 +16,12 @@
 
 ## 🖼️ Screenshots
 
-> Screenshots coming soon!
+### Homepage
+<img src="images/homepage.png" alt="Homepage" width="400"/>
+
+### Feature Highlights
+<img src="images/features.png" alt="Features" width="450
+"/>
 
 ---
 
