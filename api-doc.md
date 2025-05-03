@@ -1,12 +1,12 @@
 # Schedulr
 
 ## Table of Contents
-- [Application Description](#-backend-features-overview)
-- [Implemented Features](#-implemented-features)
-- [Database Models](#-database-models)
-- [GPT Integration](#-gpt-integration)
-- [Third-Party Tools & APIs](#-third-party-tools--apis)
-- [API Endpoint Refrence](#api-endpoint-overview)
+- [Application Description](#application-description)
+- [Implemented Features](#implemented-features)
+- [Database Models](#database-models)
+- [GPT Integration](#gpt-integration)
+- [Third-Party Tools & APIs](#third-party-tools--apis)
+- [API Endpoint Reference](#api-endpoint-reference)
 
 ## Application Description
 
@@ -65,7 +65,7 @@ This backend powers the **Schedulr**, a scheduling assistant for Cornell CS stud
 
 
 
-# API Endpoint Refrence
+## API Endpoint Refrence
 
 ## Users
 
