@@ -1,4 +1,71 @@
-# Course App API Specification
+# Schedulr
+
+## Table of Contents
+- [Application Description](#-backend-features-overview)
+- [Implemented Features](#-implemented-features)
+- [Database Models](#-database-models)
+- [GPT Integration](#-gpt-integration)
+- [Third-Party Tools & APIs](#-third-party-tools--apis)
+- [API Endpoint Refrence](#api-endpoint-overview)
+
+## Application Description
+
+This backend powers the **Schedulr**, a scheduling assistant for Cornell CS students. It includes user profile management, course catalog access, prerequisite tracking, and schedule generation via GPT.
+
+### Implemented Features
+
+#### Routes
+- `POST /users/`: Create a user with netid, grad year, interests, and availability.
+- `GET /users/`: Get all users.
+- `GET /users/<user_id>/`: Get user details.
+- `PATCH /users/<user_id>/`: Update user fields.
+- `DELETE /users/<user_id>/`: Delete user and all associated data.
+- `GET /users/<user_id>/completions/`: List completed CS courses.
+- `POST /users/<user_id>/completions/`: Add a completed course.
+- `DELETE /users/<user_id>/completions/<course_number>/`: Remove a completed course.
+- `GET /users/<user_id>/availability/`: Get availability bitmask.
+- `PATCH /users/<user_id>/availability/`: Update availability.
+
+- `GET /courses/`: Get all CS courses (with number, name, credits, description).
+- `GET /courses/<number>/`: Get a course's sections, prerequisites, and dependents.
+
+- `GET /sections/`: List all sections.
+- `GET /sections/<section_id>/`: Get section details.
+
+- `GET /core-sets/`: List required core CS courses.
+
+- `POST /schedules/generate/`: Generate an optimal schedule (max 5 courses).
+- `GET /schedules/<user_id>/`: List user’s schedules.
+- `GET /schedules/<user_id>/<sched_id>/`: Get schedule details.
+- `DELETE /schedules/<user_id>/<sched_id>/`: Delete a schedule.
+
+### Database Models
+- **User**: `netid`, `graduation_year`, `interests`, `availability`
+- **Course**: `number`, `name`, `description`, `credits`, `sections`
+- **CourseSection**: Linked to a course. Has days, times, and section code.
+- **CoreClass**: 7 CS core courses.
+- **CompletedCourse**: Link table recording which courses each user has completed.
+- **CoursePrereq**: Records course-to-course prerequisites.
+- **GeneratedSchedule**: A proposed set of course sections for a user.
+- **ScheduleSection**: Link table mapping sections to a generated schedule.
+
+### GPT Integration
+- Used in `POST /schedules/generate/` to rank electives by user interests.
+- GPT prompt includes:
+  - Interests
+  - Prerequisite assumptions
+  - CS course equivalency rules (e.g. CS 2110 vs CS 2112)
+  - Scheduling constraints (e.g. no CS 3110 with CS 3410)
+
+### Third-Party Tools
+- **OpenAI API** – Used to  rank elective courses based on user interests during schedule generation via GPT-4
+- **Cornell Class Roster API** - Used to scrape live CS course offerings, prerequisites, and section times for Fall 2024.
+- **Flask** – Python web framework for building the backend API
+- **SQLAlchemy** – ORM for managing relational data models and database interactions.
+
+
+
+# API Endpoint Refrence
 
 ## Users
 
