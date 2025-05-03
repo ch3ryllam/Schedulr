@@ -1,8 +1,4 @@
-<p align="center">
-  <img src="images/icon.png" alt="App Icon" width="60"/>
-</p>
-
-<h1 align="center">📚 Schedulr</h1>
+# Schedulr
 
 ### *A course planning tool that ranks CS classes and gives you potential schedules based on your interests using AI.*
 
@@ -17,14 +13,16 @@
 ## 🖼️ Screenshots
 
 ### Homepage
-<img src="images/homepage.png" alt="Homepage" width="400"/>
+<p align="center">
+  <img src="images/homepage.png" alt="Homepage" width="300"/>
+</p>
 
 ### Feature Highlights
-<img src="images/features.png" alt="Features" width="450
-"/>
+<p align="center">
+  <img src="images/features.png" alt="Features" width="500"/>
+</p>
 
 ---
-
 ## 🧠 About the App
 
 **Schedulr** generates a personalized schedule of CS classes based on your graduation year, completed courses, and academic interests. It prioritizes untaken core courses while also considering electives that match your interests.  
