@@ -57,10 +57,10 @@ This backend powers the **Schedulr**, a scheduling assistant for Cornell CS stud
   - CS course equivalency rules (e.g. CS 2110 vs CS 2112)
   - Scheduling constraints (e.g. no CS 3110 with CS 3410)
 
-### Third-Party Tools
-- **OpenAI API** – Used to  rank elective courses based on user interests during schedule generation via GPT-4
+### Third-Party Tools & APIs
+- **OpenAI API** – Used to  rank elective courses based on user interests during schedule generation via GPT-4.
 - **Cornell Class Roster API** - Used to scrape live CS course offerings, prerequisites, and section times for Fall 2024.
-- **Flask** – Python web framework for building the backend API
+- **Flask** – Python web framework for building the backend API.
 - **SQLAlchemy** – ORM for managing relational data models and database interactions.
 
 
