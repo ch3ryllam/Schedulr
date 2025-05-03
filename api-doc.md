@@ -10,7 +10,7 @@
 
 ## Application Description
 
-This backend powers the **Schedulr**, a scheduling assistant for Cornell CS students. It includes user profile management, course catalog access, prerequisite tracking, and schedule generation via GPT.
+This backend powers **Schedulr**, a scheduling assistant for Cornell CS students. It includes user profile management, course catalog access, prerequisite tracking, and schedule generation via GPT.
 
 ### Implemented Features
 
@@ -58,7 +58,7 @@ This backend powers the **Schedulr**, a scheduling assistant for Cornell CS stud
   - Scheduling constraints (e.g. no CS 3110 with CS 3410)
 
 ### Third-Party Tools & APIs
-- **OpenAI API** – Used to  rank elective courses based on user interests during schedule generation via GPT-4.
+- **OpenAI API** – Used to rank elective courses based on user interests during schedule generation via GPT-4.
 - **Cornell Class Roster API** - Used to scrape live CS course offerings, prerequisites, and section times for Fall 2024.
 - **Flask** – Python web framework for building the backend API.
 - **SQLAlchemy** – ORM for managing relational data models and database interactions.
