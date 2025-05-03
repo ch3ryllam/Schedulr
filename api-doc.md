@@ -65,7 +65,7 @@ This backend powers the **Schedulr**, a scheduling assistant for Cornell CS stud
 
 
 
-## API Endpoint Refrence
+## API Endpoint Reference
 
 ## Users
 
