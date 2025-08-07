@@ -1,4 +1,4 @@
-# Schedulr
+# Schedulr - Best Backend at the AppDev Hack Challenge
 
 ### *A course planning tool that ranks CS classes and gives you potential schedules based on your interests using AI.*
 
